@@ -44,7 +44,8 @@ if __name__ == "__main__":
   args = parser.parse_args()
 
   # set up the simulation
-  pgui = utils.setup_bullet_client(p.GUI)
+  # pgui = utils.setup_bullet_client(p.GUI)   # provided
+  pgui = utils.setup_bullet_client(p.DIRECT)   # grading
   panda_sim = sim.PandaSim(pgui)
 
   # Task 1: Move the Robot with Jacobian-based Projection
@@ -119,7 +120,31 @@ if __name__ == "__main__":
     # Task 4: Trajectory Optimization
     elif args.task == 4:
       ########## TODO ##########
-      pass
 
-    
+      print("Task 4: Trajectory Optimization")
+      goal = RelocateGoal()
+      pdef.set_goal(goal)
+
+      planner = rrt.KinodynamicRRT(pdef)
+      time_st = time.time()
+      solved, plan = planner.solve(120.0)
+      print("Running time of rrt.KinodynamicRRT.solve(): %f secs" % (time.time() - time_st))
+
+      if solved:
+        print("Initial plan has been found.")
+
+        plan_opt = opt.optimize_traj(plan, pdef, iterations=100)
+        print("Optimized trajectory has been found.")
+        
+        panda_sim.restore_state(pdef.get_start_state())
+        for _ in range(2):
+          panda_sim.step()
+        panda_sim.restore_state(pdef.get_start_state())
+        utils.execute_plan(panda_sim, plan_opt)
+        while True:
+          pass
+      else:
+        print("Timed out.")
+
+
       ##########################

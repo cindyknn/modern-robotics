@@ -95,8 +95,34 @@ class KinodynamicRRT(object):
                             Type: a list of rrt.Node
         """
         ########## TODO ##########
+
         solved = False
-        plan = None        
+        plan = None
+
+        time_start = time.time()
+        node_start = Node(self.pdef.get_start_state())
+        self.tree.add(node_start)
+        
+        while (time.time() - time_start < time_budget):
+            state_vect = self.state_sampler.sample()
+            nearest_node = self.tree.nearest(state_vect)
+            control_best, state_new = self.control_sampler.sample_to(nearest_node, state_vect, 1)
+            if (control_best is None or state_new is None):
+                continue
+                    
+            node_new = Node(state_new)
+            node_new.set_control(control_best)
+            node_new.set_parent(nearest_node)
+            self.tree.add(node_new)
+
+            if self.pdef.goal.is_satisfied(node_new.state):
+                plan = []
+                while node_new is not None:
+                    plan.append(node_new)
+                    node_new = node_new.get_parent()
+                plan.reverse()
+                solved = True
+                break
 
 
         ##########################

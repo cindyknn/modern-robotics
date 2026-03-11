@@ -65,6 +65,28 @@ class GraspGoal(Goal):
         """
         ########## TODO ##########
         
+        state_target = state["stateVec"][7:10]
+        pose_target = state["stateVec"][7:9]
+        ee_coords, ee_orient = self.jac_solver.forward_kinematics(state["stateVec"])
+        ee_coords[0] -= 0.4
+        ee_coords[1] -= 0.2 
+        ee_planarpos = ee_coords[:2]
+        dist = np.linalg.norm(pose_target - ee_planarpos)
+        w = ee_orient[3]
+        
+        # Angle
+        ee_angle = 2 * np.arccos(np.clip(w, -1.0, 1.0))
+        gamma = (ee_angle - state_target[2]) % 1.57079632      # % pi/2
+        gamma = min(gamma, 1.57079632 - gamma)
+
+        # Distances
+        d1 = np.cos(gamma) * dist
+        d2 = np.sin(gamma) * dist
+        if (d1 > 0.01 or d2 > 0.02 or gamma > 0.2):
+            return False
+        else:
+            return True
+
 
         ##########################
         

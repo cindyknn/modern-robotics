@@ -100,8 +100,29 @@ class ProblemDefinition(object):
         returns: Ture or False.
         """
         ########## TODO ##########
-        return True
+        
+        # a) Bounds of state space
+        if not self.bounds_state.is_satisfied(state):
+            return False
 
+        # b) Collision between robot and ground
+        if self.panda_sim.is_collision(state):
+            return False
+
+        # c) End-effector inside workspace
+        joint_values = state["stateVec"][0:sim.pandaNumDofs]
+        pos_ee_base, _ = self.panda_sim.jac_solver.forward_kinematics(joint_values)
+
+        # Robot base at [-0.4, -0.2, 0]
+        x_ee_world = pos_ee_base[0] - 0.4
+        y_ee_world = pos_ee_base[1] - 0.2
+
+        if x_ee_world < -0.35 or x_ee_world > 0.35:
+            return False
+        if y_ee_world < -0.35 or y_ee_world > 0.35:
+            return False
+
+        return True
 
         ##########################
     
@@ -113,8 +134,9 @@ class ProblemDefinition(object):
         returns: Ture or False
         """
         ########## TODO ##########
-        return True
-    
+        
+        vol_manipulability = np.sqrt(max(np.linalg.det(J @ J.T), 0.0))
+        return (vol_manipulability > 0.01)
 
         ##########################
 

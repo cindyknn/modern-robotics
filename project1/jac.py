@@ -42,6 +42,45 @@ class JacSolver(object):
         ########## TODO ##########
         J = np.zeros(shape=(6, 7))
 
+
+        fdiff = 0.01
+        pos, quat = self.forward_kinematics(joint_values)
+
+        for i in range(7):
+            angle_new = joint_values.copy()
+            angle_new[i] += fdiff
+
+            pos_new, quat_new = self.forward_kinematics(angle_new)
+            J[0:3, i] = (pos_new - pos) / fdiff
+            # print("J[0:3, i]", J[0:3, i])
+
+            angle_diff = self.bullet_client.getDifferenceQuaternion(quat, quat_new)
+            axis, angle = self.bullet_client.getAxisAngleFromQuaternion(angle_diff)
+            J[3:6, i] = np.array(axis) * angle / fdiff
+            # print("J[3:6, i]", J[3:6, i])
+
+        # try print Jacobian see weird vals maybe divide by 0??? nothing looks wrong
+
+        # delta = 0.001
+        # for i in range(7):
+        #     # Create a copy of the joint values and perturb the i-th joint
+        #     joint_values_perturbed = joint_values.copy()
+        #     joint_values_perturbed[i] += delta
         
+        #     # Calculate the forward kinematics for the perturbed joint values
+        #     pos_perturbed, quat_perturbed = self.forward_kinematics(joint_values_perturbed)
+        
+        #     # Get the original position and quaternion
+        #     pos, quat = self.forward_kinematics(joint_values)
+        
+        #     # Calculate the difference in position and orientation
+        #     pos_diff = (pos_perturbed - pos) / delta
+        #     q_diff = self.bullet_client.getDifferenceQuaternion(quat, quat_perturbed)
+        #     axis, angle = self.bullet_client.getAxisAngleFromQuaternion(q_diff)
+
+        #     J[3:, i] = np.array(axis) * angle / delta
+        #     J[:3, i] = pos_diff
+        #     print("J", J)
+
         ##########################
         return J

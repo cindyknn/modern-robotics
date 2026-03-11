@@ -196,6 +196,12 @@ class PandaSim(object):
       vq = np.zeros(shape=(7,)) # joint velocities
 
 
+      jpos, _, _ = self.get_joint_states()
+      q = np.array(jpos[0:pandaNumDofs])
+      J = self.get_jacobian_matrix(q)
+      J_pseudoinv = np.linalg.pinv(J)
+      vq = J_pseudoinv @ vx
+
       ##########################
 
       if not self.pdef.is_state_high_quality(J):
